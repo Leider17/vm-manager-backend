@@ -3,7 +3,6 @@ import uuid
 import threading
 import time
 from app.core.libvirt_utils import clone_vm, get_vm_vnc_port, destroy_vm
-from app.core.guacamole_utils import get_auth_token, create_guacamole_connection
 
 def provision_vm(student_id: str):
     vm_template_name = "MiVM"  
