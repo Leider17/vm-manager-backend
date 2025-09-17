@@ -1,4 +1,5 @@
 import libvirt
+import subprocess
 import uuid
 import re
 import xml.etree.ElementTree as ET
@@ -11,20 +12,25 @@ def connect_to_libvirt():
 
 
 def clone_vm(source_name: str, new_name: str):
-    conn = connect_to_libvirt()
+    """Clona una VM usando virt-clone (requiere libvirt-client)"""
     try:
-        source_vm = conn.lookupByName(source_name)
-        vm_xml = source_vm.XMLDesc(0)
-
-        vm_xml = re.sub(r"<name>.*?</name>", f"<name>{new_name}</name>", vm_xml, count=1)
-        vm_xml = re.sub(r"<uuid>.*?</uuid>", f"<uuid>{uuid.uuid4()}</uuid>", vm_xml, count=1)
-        vm_xml = re.sub(r"<mac address=['\"].*?['\"]\s*/>", "", vm_xml)
-
-        new_vm = conn.defineXML(vm_xml)
-        new_vm.create()
-        return new_vm
-    finally:
-        conn.close()
+        cmd = [
+            'virt-clone',
+            '--original', source_name,
+            '--name', new_name,
+            '--auto-clone'
+        ]
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        conn = connect_to_libvirt()
+        try:
+            vm = conn.lookupByName(new_name)
+            vm.create()
+            return vm
+        finally:
+            conn.close()
+            
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"Failed to clone VM: {e.stderr}")
 
 
 def get_vm_vnc_port(vm_name: str):
