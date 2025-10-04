@@ -1,7 +1,5 @@
 import libvirt
 import subprocess
-import uuid
-import re
 import xml.etree.ElementTree as ET
 
 def connect_to_libvirt():
@@ -27,8 +25,7 @@ def clone_vm(source_name: str, new_name: str):
             vm.create()
             return vm
         finally:
-            conn.close()
-            
+            conn.close()    
     except subprocess.CalledProcessError as e:
         raise Exception(f"Failed to clone VM: {e.stderr}")
 
@@ -52,22 +49,28 @@ def get_vm_vnc_port(vm_name: str):
 
 def start_vm(name: str):
     conn = connect_to_libvirt()
-    vm = conn.lookupByName(name)
-    if vm is None:
+    try:
+        vm = conn.lookupByName(name)
+    except libvirt.libvirtError:
         raise Exception(f'VM {name} not found')
     vm.create()
 
 def stop_vm(name: str):
     conn = connect_to_libvirt()
-    vm = conn.lookupByName(name)
-    if vm is None:
+    try:
+        vm = conn.lookupByName(name)
+    except libvirt.libvirtError:
         raise Exception(f'VM {name} not found')
     vm.shutdown()
 
 def destroy_vm(name: str): 
     conn = connect_to_libvirt()
-    vm = conn.lookupByName(name)
-    if vm is None:
+    try:
+        vm = conn.lookupByName(name)
+    except libvirt.libvirtError:
         raise Exception(f'VM {name} not found')
-    vm.destroy()
-    vm.undefine()
+    try:
+        vm.destroy()
+        vm.undefine()
+    except libvirt.libvirtError as e:
+        raise Exception(f'Failed to destroy VM {name}: {e}')
