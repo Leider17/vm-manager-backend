@@ -22,6 +22,7 @@ def register_user(user_create: UserCreate, session: Session = Depends(get_sessio
     Returns:
         el token de acceso, en caso de fallar devuelve un status 409 o 500.
     """
+    print(user_create)
     result = register_user_service(user_create, session)
     if result is None:
         existing_user = session.exec(select(User).where(User.email == user_create.email)).first()
@@ -31,7 +32,7 @@ def register_user(user_create: UserCreate, session: Session = Depends(get_sessio
                 detail="email already registered"
             )
         else:
-             raise HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error registering user"
             )

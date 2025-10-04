@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 
 class UserBase(SQLModel):
+    name: str = Field(default=None)
     email: str = Field(default=None,unique=True) 
     password: str = Field(default=None)
     
@@ -12,7 +13,8 @@ class UserCreate(UserBase):
     pass
 
 class UserLogin(UserBase):
-    pass
+    email: str
+    password: str
 
 class Token(BaseModel):
     access_token: str
