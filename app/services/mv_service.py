@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException
 import uuid
 import threading
 import time
+from sqlmodel import Session, select
+from app.models.vm_model import Vm
 from app.core.libvirt_utils import clone_vm, get_vm_vnc_port, destroy_vm, start_vm, stop_vm
 
 def provision_vm(student_id: str):
@@ -12,13 +14,10 @@ def provision_vm(student_id: str):
         clone_vm(vm_template_name, vm_name)
         
         time.sleep(20) 
-        vnc_port = get_vm_vnc_port(vm_name)
-        if not vnc_port:
-            raise Exception("No se pudo obtener el puerto VNC de la MV.")
-        
+
         return {
             "vm_name": vm_name,
-            "vnc_port": vnc_port
+            "status": "success",
         }
 
     except Exception as e:
@@ -54,4 +53,26 @@ def destroy_vm_service(vm_name: str):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al destruir la MV: {str(e)}")
+
+def get_vms_user_service(user_id: str, session: Session):
+    try:
+        vms= session.exec(select(MV).where(MV.user_id == user_id)).all()
+        return vms
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener las MVs del usuario: {str(e)}")
     
+def get_all_vms_service(session: Session):
+    try:
+        vms= session.exec(select(MV)).all()
+        return vms
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener las MVs: {str(e)}")
+    
+def validate_vm_ownership(vm_name: str, user_id: str, session: Session):
+    try:
+        vm = session.exec(select(MV).where(MV.name == vm_name, MV.user_id == user_id)).first()
+        if not vm:
+            raise HTTPException(status_code=404, detail="MV no encontrada o no pertenece al usuario.")
+        return vm
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al validar la propiedad de la MV: {str(e)}")

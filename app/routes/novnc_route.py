@@ -1,26 +1,29 @@
-from fastapi import APIRouter, HTTPException, Body
-from app.services.novnc_service import start_novnc, stop_novnc
+from fastapi import APIRouter, HTTPException, Body, FastAPI, WebSocket
+from pydantic import BaseModel
+from app.services.novnc_service import create_session
 
 router = APIRouter(
     prefix="/novnc",
     tags=["novnc"]
 )
 
+class ConnectRequest(BaseModel):
+    vm_name: str
+    user_id: int
+
+class DisconnectRequest(BaseModel):
+    vm_name: str
+
 @router.post("/connect")
-def connect_vm(payload: dict = Body(...)):
-    vm_name = payload.get("vm_name")
-    vnc_port = payload.get("vnc_port")
-    if not vm_name or not vnc_port:
-        raise HTTPException(status_code=400, detail="vm_name y vncPort requeridos")
+def connect_vm(request: ConnectRequest):
+    try:
+        token = create_session(request.user_id,request.vm_name)
+        return {"websocket_url": f"ws://localhost:8000/vnc-proxy/{token}"}
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 
-    novnc_url = start_novnc(vm_name, vnc_port)
-    return {"url": novnc_url}
 
-@router.post("/disconnect")
-def disconnect_vm(data: dict):
-    vm_name = data.get("vm_name")
-    if not vm_name:
-        raise HTTPException(status_code=400, detail="Se requiere vm_name")
-
-    stop_novnc(vm_name)
-    return {"message": f"Túnel para {vm_name} detenido"}

@@ -1,7 +1,7 @@
 from fastapi import HTTPException,APIRouter, Body
-from app.services.user_service import provision_vm
+from app.services.mv_service import provision_vm
 from app.schemas.user_schema import UserId
-from app.services.user_service import start_vm_service, stop_vm_service, destroy_vm_service
+from app.services.mv_service import start_vm_service, stop_vm_service, destroy_vm_service
 
 router= APIRouter(
     prefix="/user",

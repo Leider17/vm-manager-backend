@@ -74,3 +74,9 @@ def destroy_vm(name: str):
         vm.undefine()
     except libvirt.libvirtError as e:
         raise Exception(f'Failed to destroy VM {name}: {e}')
+    
+# def is_vm_running(vm_name):
+#     conn = connect_to_libvirt()
+#     try:
+#         vm = conn.lookupByName(vm_name)
+#     if vm.state == 'running'
