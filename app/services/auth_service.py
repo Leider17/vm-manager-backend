@@ -16,7 +16,6 @@ def register_user_service(user_create: UserCreate, session: Session) -> Union[To
     Returns:
         el token de acceso
     """
-    print(user_create)
     try:
         existing_user = session.exec(select(User).where(User.email == user_create.email)).first()
         if existing_user:
