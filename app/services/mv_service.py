@@ -70,37 +70,37 @@ def destroy_vm_service(vm_name: str, vm_id: int, session: Session):
 
 def get_vms_user_service(user_id: str, session: Session):
     try:
-        vms= session.exec(select(MV).where(MV.user_id == user_id)).all()
+        vms= session.exec(select(Vm).where(Vm.user_id == user_id)).all()
         return vms
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al obtener las MVs del usuario: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al obtener las Vms del usuario: {str(e)}")
     
 def get_all_vms_service(session: Session):
     try:
-        vms= session.exec(select(MV)).all()
+        vms= session.exec(select(Vm)).all()
         return vms
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al obtener las MVs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al obtener las Vms: {str(e)}")
     
 def get_info_vm_service(vm_name: str):
     try:
         info = get_info_vm(vm_name)
         return info
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al obtener la información de la MV: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al obtener la información de la Vm: {str(e)}")
     
 def validate_vm_ownership(vm_name: str, user_id: str, session: Session):
     try:
-        vm = session.exec(select(MV).where(MV.name == vm_name, MV.user_id == user_id)).first()
+        vm = session.exec(select(Vm).where(Vm.name == vm_name, Vm.user_id == user_id)).first()
         if not vm:
-            raise HTTPException(status_code=404, detail="MV no encontrada o no pertenece al usuario.")
+            raise HTTPException(status_code=404, detail="Vm no encontrada o no pertenece al usuario.")
         return vm
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al validar la propiedad de la MV: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al validar la propiedad de la Vm: {str(e)}")
     
 def update_vm_status_service(vm_name: str, status: str, session: Session):
     try:
-        vm = session.exec(select(MV).where(MV.name == vm_name)).first()
+        vm = session.exec(select(Vm).where(Vm.name == vm_name)).first()
         if not vm:
             raise HTTPException(status_code=404, detail="MV no encontrada.")
         vm.status = status

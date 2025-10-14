@@ -16,7 +16,16 @@ class UserLogin(UserBase):
     email: str
     password: str
 
+class userResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    role: str
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
+    user: userResponse
+    
 

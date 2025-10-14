@@ -1,45 +1,47 @@
 from fastapi import HTTPException,APIRouter, Body
 from app.services.mv_service import provision_vm
 from app.schemas.vm_schema import provisionRequest
+from app.core.db import get_session
 from app.services.mv_service import start_vm_service, stop_vm_service, destroy_vm_service, get_vms_user_service, get_all_vms_service, get_info_vm_service
 from fastapi import Depends
+from sqlmodel import Session
 from app.core.db import get_session
 
 router= APIRouter(
-    prefix="/user",
-    tags=["user"]
+    prefix="/vm",
+    tags=["vm"]
 )
 
 @router.post("/provision")
-async def post_provision(request: provisionRequest):
-    vm = provision_vm(request.UserId, request.vmType)
+async def post_provision(request: provisionRequest, session: Session = Depends(get_session)):
+    vm = provision_vm(request.UserId, request.vmType, session)
     if vm is None:
         raise HTTPException(status_code=500, detail="Error en el aprovisionamiento de la MV.")
     return vm
 
 @router.post("/start")
-async def post_start(payload: dict = Body(...)):
+async def post_start(payload: dict = Body(...), session: Session = Depends(get_session)):
     vm_name = payload.get("vm_name")
     if not vm_name:
         raise HTTPException(status_code=400, detail="El nombre de la MV es obligatorio.")
-    return start_vm_service(vm_name)
+    return start_vm_service(vm_name, session)
 
 @router.post("/stop")
-async def post_stop(payload: dict = Body(...)):
+async def post_stop(payload: dict = Body(...), session: Session = Depends(get_session)):
     vm_name = payload.get("vm_name")
     if not vm_name:
         raise HTTPException(status_code=400, detail="El nombre de la MV es obligatorio.")
-    return stop_vm_service(vm_name)
+    return stop_vm_service(vm_name, session)
 
 @router.post("/destroy")
-async def post_destroy(payload: dict = Body(...)):
+async def post_destroy(payload: dict = Body(...), session: Session = Depends(get_session)):
     vm_name = payload.get("vm_name")
     if not vm_name:
         raise HTTPException(status_code=400, detail="El nombre de la MV es obligatorio.")
-    return destroy_vm_service(vm_name)
+    return destroy_vm_service(vm_name, session)
 
 @router.get("/{user_id}")
-async def get_vms_user(user_id: str, session=Depends(get_session)):
+async def get_vms_user(user_id: str, session = Depends(get_session)):
     vm = get_vms_user_service(user_id, session)
     if vm is None:
         raise HTTPException(status_code=500, detail="Error al obtener las MVs del usuario.")

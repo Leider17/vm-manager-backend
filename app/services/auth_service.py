@@ -48,7 +48,6 @@ def login_for_access_token_service(user_login: UserLogin, session: Session) -> U
     """
     try:
         user = session.exec(select(User).where(User.email == user_login.email)).first()
-        print(user_login.password, user.password)
         if not user or not verify_password(user_login.password, user.password):
             return None 
 
@@ -56,7 +55,7 @@ def login_for_access_token_service(user_login: UserLogin, session: Session) -> U
         access_token = create_access_token(
             data={"sub": user.email}, expires_delta=access_token_expires
         )
-        return {"access_token": access_token, "token_type": "bearer"}
+        return {"access_token": access_token, "token_type": "bearer", "user": user}
     except Exception as e:
         print(f"Error in login_for_access_token_service: {e}")
         return None 
