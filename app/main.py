@@ -5,6 +5,7 @@ from app.core.db import create_all_tables
 from app.routes.mv_route import router 
 from app.routes.novnc_route import router as novnc_router
 from app.routes.auth_route import router as auth_router
+from app.routes.type_route import router as type_router
 from app.services.novnc_service import validate_session
 from app.core.websocket_proxy import stablish_tunnel
 
@@ -39,4 +40,5 @@ async def vnc_websocket_handler(websocket: WebSocket, token: str):
 app.include_router(router)
 app.include_router(novnc_router)
 app.include_router(auth_router)
+app.include_router(type_router)
 
