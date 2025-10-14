@@ -5,7 +5,7 @@ import os
 
 def connect_to_libvirt():
     conn = libvirt.open('qemu:///system')
-    info= conn.getInfo()
+    info = conn.getInfo()
     print("Conectado a libvirt, info del host:", info)
     if conn is None:
         raise Exception('Failed to open connection to qemu:///system')
@@ -21,7 +21,7 @@ def clone_vm(source_name: str, new_name: str):
             '--name', new_name,
             '--auto-clone'
         ]
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        subprocess.run(cmd, check = True, capture_output = True, text = True)
         conn = connect_to_libvirt()
         try:
             vm = conn.lookupByName(new_name)

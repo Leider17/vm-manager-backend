@@ -6,7 +6,7 @@ from app.models.user_model import User
 from app.models.vm_model import Vm
 
 
-URL_DB=config("DATABASE_URL")
+URL_DB = config("DATABASE_URL")
 if not URL_DB:
     raise ValueError("DATABASE_URL is not set in the environment variables.")
 engine = create_engine(URL_DB)

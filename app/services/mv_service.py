@@ -19,15 +19,15 @@ def provision_vm(student_id: str, vm_type: str, session: Session):
         session.add(vm)
         session.commit()
         session.refresh(vm)
-        return {
-            "vm_name": vm_name,
-            "status": "success",
-            "vm": vm
+        return { 
+            "vm_name": vm_name, 
+            "status": "success", 
+            "vm": vm 
         }
 
     except Exception as e:
-        threading.Thread(target=lambda: destroy_vm(vm_name)).start()
-        raise HTTPException(status_code=500, detail=f"Error en el aprovisionamiento: {str(e)}")
+        threading.Thread(target = lambda: destroy_vm(vm_name)).start()
+        raise HTTPException(status_code = 500, detail = f"Error en el aprovisionamiento: {str(e)}")
     
 def start_vm_service(vm_name: str, session: Session):
     try:
@@ -39,7 +39,7 @@ def start_vm_service(vm_name: str, session: Session):
             "message": f"MV {vm_name} iniciada correctamente."
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al iniciar la MV: {str(e)}")
+        raise HTTPException(status_code = 500, detail = f"Error al iniciar la MV: {str(e)}")
 
 def stop_vm_service(vm_name: str, session: Session):
     try:
@@ -51,14 +51,14 @@ def stop_vm_service(vm_name: str, session: Session):
             "message": f"MV {vm_name} detenida correctamente."
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al detener la MV: {str(e)}")
+        raise HTTPException(status_code = 500, detail = f"Error al detener la MV: {str(e)}")
 
 def destroy_vm_service(vm_name: str, vm_id: int, session: Session):
     try:
         destroy_vm(vm_name)
         vm = session.get(Vm, vm_id)
         if not vm:
-            raise HTTPException(status_code=404, detail='vm no encontrada')
+            raise HTTPException(status_code = 404, detail = 'vm no encontrada')
         session.delete(vm)
         session.commit
         return {
@@ -66,47 +66,47 @@ def destroy_vm_service(vm_name: str, vm_id: int, session: Session):
             "message": f"MV {vm_name} destruida correctamente."
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al destruir la MV: {str(e)}")
+        raise HTTPException(status_code = 500, detail = f"Error al destruir la MV: {str(e)}")
 
 def get_vms_user_service(user_id: str, session: Session):
     try:
         vms= session.exec(select(Vm).where(Vm.user_id == user_id)).all()
         return vms
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al obtener las Vms del usuario: {str(e)}")
+        raise HTTPException(status_code = 500, detail = f"Error al obtener las Vms del usuario: {str(e)}")
     
 def get_all_vms_service(session: Session):
     try:
         vms= session.exec(select(Vm)).all()
         return vms
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al obtener las Vms: {str(e)}")
+        raise HTTPException(status_code = 500, detail = f"Error al obtener las Vms: {str(e)}")
     
 def get_info_vm_service(vm_name: str):
     try:
         info = get_info_vm(vm_name)
         return info
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al obtener la información de la Vm: {str(e)}")
+        raise HTTPException(status_code = 500, detail = f"Error al obtener la información de la Vm: {str(e)}")
     
 def validate_vm_ownership(vm_name: str, user_id: str, session: Session):
     try:
         vm = session.exec(select(Vm).where(Vm.name == vm_name, Vm.user_id == user_id)).first()
         if not vm:
-            raise HTTPException(status_code=404, detail="Vm no encontrada o no pertenece al usuario.")
+            raise HTTPException(status_code = 404, detail = "Vm no encontrada o no pertenece al usuario.")
         return vm
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al validar la propiedad de la Vm: {str(e)}")
+        raise HTTPException(status_code = 500, detail = f"Error al validar la propiedad de la Vm: {str(e)}")
     
 def update_vm_status_service(vm_name: str, status: str, session: Session):
     try:
         vm = session.exec(select(Vm).where(Vm.name == vm_name)).first()
         if not vm:
-            raise HTTPException(status_code=404, detail="MV no encontrada.")
+            raise HTTPException(status_code = 404, detail = "MV no encontrada.")
         vm.status = status
         session.add(vm)
         session.commit()
         session.refresh(vm)
         return vm
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al actualizar el estado de la MV: {str(e)}")
+        raise HTTPException(status_code = 500, detail = f"Error al actualizar el estado de la MV: {str(e)}")

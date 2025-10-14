@@ -22,20 +22,13 @@ def register_user(user_create: UserCreate, session: Session = Depends(get_sessio
     Returns:
         el token de acceso, en caso de fallar devuelve un status 409 o 500.
     """
-    print(user_create)
     result = register_user_service(user_create, session)
     if result is None:
         existing_user = session.exec(select(User).where(User.email == user_create.email)).first()
         if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="email already registered"
-            )
+            raise HTTPException( status_code=status.HTTP_409_CONFLICT, detail="email already registered")
         else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error registering user"
-            )
+            raise HTTPException( status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error registering user")
     return result
 
 @router.post("/login", response_model=Token)
@@ -49,14 +42,8 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), ses
     Returns:
         el token de acceso, en caso de fallar devuelve un status 401.
     """
-    result = login_for_access_token_service(
-        UserLogin(email=form_data.username, password=form_data.password), 
-        session
-    )
+    result = login_for_access_token_service( UserLogin(email=form_data.username, password=form_data.password), session )
+
     if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credentials are incorrect",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise HTTPException( status_code=status.HTTP_401_UNAUTHORIZED, detail="Credentials are incorrect", headers={"WWW-Authenticate": "Bearer"} )
     return result

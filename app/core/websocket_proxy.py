@@ -12,10 +12,12 @@ async def stablish_tunnel(websocket: WebSocket, session_data):
         if not server_version:
             await websocket.close(1000, "VNC server closed during handshake")
             return
+        
         await websocket.send_bytes(server_version)
         client_version_msg = await websocket.receive_bytes()
         client_version = client_version_msg 
         vnc_writer.write(client_version)
+        
         await vnc_writer.drain()
         await proxy_bidirectional(websocket, vnc_reader, vnc_writer)
 

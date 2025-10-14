@@ -4,9 +4,9 @@ from pydantic import BaseModel
 
 
 class UserBase(SQLModel):
-    name: str = Field(default=None)
-    email: str = Field(default=None,unique=True) 
-    password: str = Field(default=None)
+    name: str = Field(default = None)
+    email: str = Field(default = None, unique = True) 
+    password: str = Field(default = None)
     
 
 class UserCreate(UserBase):
