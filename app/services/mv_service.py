@@ -15,7 +15,7 @@ def provision_vm(student_id: str, vm_type: str, session: Session):
 
         # time.sleep(20) 
         vnc_port = get_vm_vnc_port(vm_name)
-        vm = Vm(name = vm_name, vnc_port = vnc_port, status = "running", user_id = student_id )
+        vm = Vm(name = vm_name, vnc_port = vnc_port, state = "running", user_id = student_id, type_id = vm_type )
         session.add(vm)
         session.commit()
         session.refresh(vm)
@@ -57,6 +57,7 @@ def destroy_vm_service(vm_name: str, vm_id: int, session: Session):
     try:
         destroy_vm(vm_name)
         vm = session.get(Vm, vm_id)
+        print(vm)
         if not vm:
             raise HTTPException(status_code = 404, detail = 'vm no encontrada')
         session.delete(vm)
@@ -98,12 +99,12 @@ def validate_vm_ownership(vm_name: str, user_id: str, session: Session):
     except Exception as e:
         raise HTTPException(status_code = 500, detail = f"Error al validar la propiedad de la Vm: {str(e)}")
     
-def update_vm_status_service(vm_name: str, status: str, session: Session):
+def update_vm_status_service(vm_name: str, state: str, session: Session):
     try:
         vm = session.exec(select(Vm).where(Vm.name == vm_name)).first()
         if not vm:
             raise HTTPException(status_code = 404, detail = "MV no encontrada.")
-        vm.status = status
+        vm.state = state
         session.add(vm)
         session.commit()
         session.refresh(vm)
