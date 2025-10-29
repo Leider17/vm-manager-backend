@@ -43,7 +43,6 @@ async def proxy_bidirectional(websocket: WebSocket, vnc_reader: asyncio.StreamRe
             vnc_writer.close()
     
     async def vnc_to_ws():
-        print("Iniciando vnc_to_ws")
         while not vnc_reader.at_eof():
             try:
                 data = await vnc_reader.read(4096)

@@ -28,7 +28,7 @@ def validate_session(token: str):
     if not session:
         return None
 
-    redis_client.delete(f"vncToken:{token}")
+    # redis_client.delete(f"vncToken:{token}")
     return json.loads(session)
 
 
