@@ -3,10 +3,11 @@ import uuid
 import threading
 import time
 from sqlmodel import Session, select
-from app.models.vm_model import Vm
-from app.core.libvirt_utils import clone_vm, destroy_vm, start_vm, stop_vm, get_info_vm, get_vm_vnc_port
+from app.models.vm_model import Vm, VmRead
+from app.models.type_model import Type
+from app.core.libvirt_utils import clone_vm, destroy_vm, start_vm, stop_vm, get_info_vm, get_vm_vnc_port, get_state_vm
 
-def provision_vm(student_id: str, vm_type: str, session: Session):
+def provision_vm(student_id: str, type_id: str, session: Session):
     vm_template_name = "MiVM"  
 
     vm_name = f"vm-{student_id}-{uuid.uuid4().hex[:6]}"
@@ -15,15 +16,20 @@ def provision_vm(student_id: str, vm_type: str, session: Session):
 
         # time.sleep(20) 
         vnc_port = get_vm_vnc_port(vm_name)
-        vm = Vm(name = vm_name, vnc_port = vnc_port, state = "running", user_id = student_id, type_id = vm_type )
+        vm = Vm(name = vm_name, vnc_port = vnc_port, state = "stopped", user_id = student_id, type_id = type_id )
         session.add(vm)
         session.commit()
         session.refresh(vm)
-        return { 
-            "vm_name": vm_name, 
-            "status": "success", 
-            "vm": vm 
-        }
+    
+        return VmRead(
+                id = vm.id,
+                name = vm.name,
+                vnc_port = vm.vnc_port,
+                state = vm.state,
+                user_id = vm.user_id,
+                type_id = vm.type_id,
+                type_name = vm.vm_type.name 
+            )
 
     except Exception as e:
         threading.Thread(target = lambda: destroy_vm(vm_name)).start()
@@ -33,35 +39,43 @@ def start_vm_service(vm_name: str, session: Session):
     try:
         start_vm(vm_name)
         vm = update_vm_status_service(vm_name, "running", session)
-        return {
-            "vm": vm,
-            "status": "success",
-            "message": f"MV {vm_name} iniciada correctamente."
-        }
+        return VmRead(
+                    id = vm.id,
+                    name = vm.name,
+                    vnc_port = vm.vnc_port,
+                    state = vm.state,
+                    user_id = vm.user_id,
+                    type_id = vm.type_id,
+                    type_name = vm.vm_type.name 
+                )
     except Exception as e:
         raise HTTPException(status_code = 500, detail = f"Error al iniciar la MV: {str(e)}")
 
 def stop_vm_service(vm_name: str, session: Session):
     try:
         stop_vm(vm_name)
+    
         vm = update_vm_status_service(vm_name, "stopped", session)
-        return {
-            "vm": vm,
-            "status": "success",
-            "message": f"MV {vm_name} detenida correctamente."
-        }
+        return VmRead(
+                    id = vm.id,
+                    name = vm.name,
+                    vnc_port = vm.vnc_port,
+                    state = vm.state,
+                    user_id = vm.user_id,
+                    type_id = vm.type_id,
+                    type_name = vm.vm_type.name 
+                )
     except Exception as e:
         raise HTTPException(status_code = 500, detail = f"Error al detener la MV: {str(e)}")
 
 def destroy_vm_service(vm_name: str, vm_id: int, session: Session):
     try:
-        destroy_vm(vm_name)
         vm = session.get(Vm, vm_id)
-        print(vm)
         if not vm:
             raise HTTPException(status_code = 404, detail = 'vm no encontrada')
+        destroy_vm(vm_name)
         session.delete(vm)
-        session.commit
+        session.commit()
         return {
             "status": "success",
             "message": f"MV {vm_name} destruida correctamente."
@@ -71,8 +85,20 @@ def destroy_vm_service(vm_name: str, vm_id: int, session: Session):
 
 def get_vms_user_service(user_id: str, session: Session):
     try:
-        vms= session.exec(select(Vm).where(Vm.user_id == user_id)).all()
-        return vms
+        vms = session.exec(select(Vm).join(Type).where(Vm.type_id == Type.id).where(Vm.user_id == user_id)).all()
+        result = [
+            VmRead(
+                id = vm.id,
+                name = vm.name,
+                vnc_port = vm.vnc_port,
+                state = vm.state,
+                user_id = vm.user_id,
+                type_id = vm.type_id,
+                type_name = vm.vm_type.name 
+            )
+            for vm in vms
+        ]
+        return result
     except Exception as e:
         raise HTTPException(status_code = 500, detail = f"Error al obtener las Vms del usuario: {str(e)}")
     
@@ -111,3 +137,19 @@ def update_vm_status_service(vm_name: str, state: str, session: Session):
         return vm
     except Exception as e:
         raise HTTPException(status_code = 500, detail = f"Error al actualizar el estado de la MV: {str(e)}")
+    
+def sync_state_service(vm_name: str, session: Session):
+    try:
+        state = get_state_vm(vm_name)
+        vm = session.exec(select(Vm).where(Vm.name == vm_name)).first()
+        if (state == "running"):
+            vm.state = "running"
+        else:
+            vm.state = "stopped"
+        session.add(vm)
+        session.commit()
+        session.refresh(vm)
+        return vm
+    except Exception as e:
+        raise HTTPException(status_code = 500, detail = f"Error al sincronizar el estado de la máquina")
+    

@@ -10,6 +10,10 @@ class Vm(VmBase,table = True):
     id: Optional[int] = Field(default = None, primary_key = True)
     
     user: Optional[User] = Relationship(back_populates = "vms")
-    type: Optional[Type] = Relationship(back_populates = "vms")
+    vm_type: Optional[Type] = Relationship(back_populates = "vms")
+
+class VmRead(VmBase):
+    id: int
+    type_name: str
 
     

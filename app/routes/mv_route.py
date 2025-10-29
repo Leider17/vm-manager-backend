@@ -1,10 +1,11 @@
 from fastapi import HTTPException,APIRouter, Body
+from app.models.vm_model import Vm
 from app.services.mv_service import provision_vm
 from app.schemas.vm_schema import provisionRequest
 from app.core.db import get_session
 from app.services.mv_service import start_vm_service, stop_vm_service, destroy_vm_service, get_vms_user_service, get_all_vms_service, get_info_vm_service
 from fastapi import Depends
-from sqlmodel import Session
+from sqlmodel import Session, select
 from app.core.db import get_session
 
 router= APIRouter(
@@ -39,10 +40,10 @@ async def post_stop(payload: dict = Body(...), session: Session = Depends(get_se
 @router.post("/destroy")
 async def post_destroy(payload: dict = Body(...), session: Session = Depends(get_session)):
     vm_name = payload.get("vm_name")
-
+    vm = session.exec(select(Vm).where(Vm.name == vm_name)).first()
     if not vm_name:
         raise HTTPException(status_code=400, detail="El nombre de la MV es obligatorio.")
-    return destroy_vm_service(vm_name, session)
+    return destroy_vm_service(vm_name, vm.id, session)
 
 @router.get("/{user_id}")
 async def get_vms_user(user_id: str, session = Depends(get_session)):
