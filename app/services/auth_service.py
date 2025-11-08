@@ -1,5 +1,4 @@
 from sqlmodel import Session, select
-from datetime import timedelta
 from typing import Union 
 from app.models.user_model import User
 from app.schemas.user_schema import UserCreate, UserLogin, Token
@@ -27,11 +26,10 @@ def register_user_service(user_create: UserCreate, session: Session) -> Union[To
         session.commit()
         session.refresh(db_user)
 
-        access_token_expires = timedelta(minutes = 60)
         access_token = create_access_token(
-            data = {"sub": db_user.email}, expires_delta = access_token_expires
+            data = {"sub": db_user.email}
         )
-        return {"access_token": access_token, "token_type": "bearer"}
+        return {"access_token": access_token, "token_type": "bearer", "user": db_user}
     
     except Exception as e:
         print(f"Error en register_user_service: {e}")
@@ -53,8 +51,7 @@ def login_for_access_token_service(user_login: UserLogin, session: Session) -> U
         if not user or not verify_password(user_login.password, user.password):
             return None 
 
-        access_token_expires = timedelta(minutes = 30)
-        access_token = create_access_token( data = {"sub": user.email}, expires_delta = access_token_expires)
+        access_token = create_access_token( data = {"sub": user.email})
         return {"access_token": access_token, "token_type": "bearer", "user": user}
     
     except Exception as e:
