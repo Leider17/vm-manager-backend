@@ -26,7 +26,7 @@ def register_user(user_create: UserCreate, session: Session = Depends(get_sessio
     if result is None:
         existing_user = session.exec(select(User).where(User.email == user_create.email)).first()
         if existing_user:
-            raise HTTPException( status_code=status.HTTP_409_CONFLICT, detail="email already registered")
+            raise HTTPException( status_code=status.HTTP_409_CONFLICT, detail="el correo ya tiene una cuenta relacionada")
         else:
             raise HTTPException( status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error registering user")
     return result
@@ -45,5 +45,5 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), ses
     result = login_for_access_token_service( UserLogin(email=form_data.username, password=form_data.password), session )
 
     if result is None:
-        raise HTTPException( status_code=status.HTTP_401_UNAUTHORIZED, detail="Credentials are incorrect", headers={"WWW-Authenticate": "Bearer"} )
+        raise HTTPException( status_code=status.HTTP_401_UNAUTHORIZED, detail=" Las credenciales son incorrectas", headers={"WWW-Authenticate": "Bearer"} )
     return result
