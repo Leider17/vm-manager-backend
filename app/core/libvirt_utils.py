@@ -1,6 +1,7 @@
 import libvirt
 import subprocess
 import xml.etree.ElementTree as ET
+import time
 import os
 
 def connect_to_libvirt():
@@ -60,7 +61,6 @@ def stop_vm(name: str):
         vm = conn.lookupByName(name)
     except libvirt.libvirtError:
         raise Exception(f'VM {name} not found')
-    # vm.shutdown()
     vm.destroy()
 
 def destroy_vm(name: str): 
@@ -88,6 +88,11 @@ def get_info_vm (name: str):
     except libvirt.libvirtError:
         raise Exception(f'VM {name} not found')
     state, max_mem, mem, num_cpu, cpu_time = vm.info()
+    xml_desc = vm.XMLDesc(0)
+    root = ET.fromstring(xml_desc)
+    disk_path = root.find(".//disk/source").get("file")
+    disk_size = vm.blockInfo(disk_path)[0]
+    actual_usage = vm.blockInfo(disk_path)[1]
     
     state_dict = {
         libvirt.VIR_DOMAIN_NOSTATE: 'no state',
@@ -102,10 +107,12 @@ def get_info_vm (name: str):
 
     return {
         'state': state_dict.get(state, 'unknown'),
-        'max_mem': max_mem,
-        'mem': mem,
+        'max_mem': max_mem / 1048576,
+        'mem': mem / 1048576,
         'num_cpu': num_cpu,
-        'cpu_time': cpu_time
+        'cpu_time': cpu_time,
+        'disk_size': disk_size / 1048576,
+        'disk_usage': actual_usage / 1048576
     }
 
 def get_state_vm(name:str):

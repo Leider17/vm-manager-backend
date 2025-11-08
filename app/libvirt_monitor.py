@@ -46,9 +46,8 @@ class LibvirtMonitor:
                 self.manager.broadcast(message),
                 self.loop
             )
-            print(f"Evento enviado via broadcast: {vm_name} - {event_type}")
         else:
-            print(f" El bucle de eventos está cerrado o es None. No se puede transmitir el evento para {vm_name}.")
+            print(f" El bucle de eventos está cerrado. No se puede transmitir el evento para {vm_name}.")
 
     async def start_monitoring(self):
         """Inicia el monitoreo en un hilo separado"""
