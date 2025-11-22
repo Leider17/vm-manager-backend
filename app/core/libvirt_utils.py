@@ -16,7 +16,7 @@ def clone_vm(source_name: str, new_name: str):
     """Clona una VM usando virt-clone (requiere libvirt-client)"""
     try:
         cmd = [
-            'virt-clone',
+            '/usr/bin/virt-clone',
             '--original', source_name,
             '--name', new_name,
             '--auto-clone'
