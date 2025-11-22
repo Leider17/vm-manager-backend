@@ -9,7 +9,7 @@ from sqlmodel import Session, select
 from app.core.db import get_session
 from app.models.user_model import User
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated = "auto")
+pwd_context = CryptContext(schemes=["bcrypt"])
 
 SECRET_KEY = config("SECRET_KEY")
 ALGORITHM = "HS256"
