@@ -16,4 +16,10 @@ class VmRead(VmBase):
     id: int
     type_name: str
 
+class VmComplete(VmBase):
+    id: int
+    type_name: str
+    user_name: str
+
+
     

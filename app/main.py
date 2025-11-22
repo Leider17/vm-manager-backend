@@ -33,8 +33,6 @@ async def lifespan(app: FastAPI):
     await monitor.stop_monitoring()
 
 
-
-
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
@@ -43,18 +41,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-
-# app = FastAPI(lifespan=create_all_tables)
-
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins="*",
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
-
 
 
 @app.get("/")
@@ -71,21 +57,6 @@ async def vnc_websocket_handler(websocket: WebSocket, token: str):
         return
     
     await stablish_tunnel(websocket, session)
-
-# @app.websocket("/stateVm")
-# async def validate_state(websocket: WebSocket, session: Session = Depends(get_session)):
-#     await websocket.accept()
-#     prev_state = {}
-#     while True:
-#         for vm in get_all_vms_service(session):
-#             currentVm = sync_state_service(vm.name, session)
-#             print(currentVm)
-#             if (currentVm.state != prev_state.get(vm.name)):
-#                 print(currentVm)
-#                 await websocket.send_json(currentVm.model_dump())
-#                 prev_state[vm.name] = currentVm.state
-#         await asyncio.sleep(5)
-
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

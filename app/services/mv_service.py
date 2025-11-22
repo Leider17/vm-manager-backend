@@ -1,29 +1,33 @@
 from fastapi import FastAPI, HTTPException
 import uuid
 import threading
+import time
 import psutil
 from sqlmodel import Session, select
-from app.models.vm_model import Vm, VmRead
+from app.models.vm_model import Vm, VmRead, VmComplete
 from app.models.type_model import Type
+from app.models.type_model import Type
+from app.models.user_model import User
 from app.core.libvirt_utils import clone_vm, destroy_vm, start_vm, stop_vm, get_info_vm, get_vm_vnc_port, get_state_vm
+from app.core.log_utils import log_performance
 
 def provision_vm(student_id: str, type_id: str, session: Session):
-    vm_template_name = "debian13"  
-
+    type_vm = session.exec(select(Type).where(Type.id == type_id)).first()
     vm_name = f"vm-{uuid.uuid4().hex[:6]}"
 
-    resources = validate_resources(vm_template_name,'creation')
+    resources = validate_resources(type_vm.name,'creation')
     if not resources['can_proceed']:
         raise HTTPException(status_code=409, detail="Recursos insuficientes para crear la máquina")
     try:
-        clone_vm(vm_template_name, vm_name)
-
+        start_time = time.time()
+        clone_vm(type_vm.name, vm_name)
         vnc_port = get_vm_vnc_port(vm_name)
         vm = Vm(name = vm_name, vnc_port = vnc_port, state = "stopped", user_id = student_id, type_id = type_id )
         session.add(vm)
         session.commit()
         session.refresh(vm)
-    
+        end_time = time.time()
+        log_performance(operation="clone", vm_name=type_vm.name, duration = end_time - start_time, status='success')
         return VmRead(
                 id = vm.id,
                 name = vm.name,
@@ -35,7 +39,7 @@ def provision_vm(student_id: str, type_id: str, session: Session):
             )
 
     except Exception as e:
-        threading.Thread(target = lambda: destroy_vm(vm_name)).start()
+        # threading.Thread(target = lambda: destroy_vm(vm_name)).start()
         raise HTTPException(status_code = 500, detail = f"Error en el aprovisionamiento: {str(e)}")
     
 def start_vm_service(vm_name: str, session: Session):
@@ -43,8 +47,11 @@ def start_vm_service(vm_name: str, session: Session):
     if not resources['can_proceed']:
         raise HTTPException(status_code=409, detail="Recursos insuficientes en el host para iniciar la máquina")
     try:
+        start_time = time.time()
         start_vm(vm_name)
         vm = update_vm_status_service(vm_name, "running", session)
+        end_time = time.time()
+        log_performance(operation="start", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success')
         return VmRead(
                     id = vm.id,
                     name = vm.name,
@@ -59,9 +66,12 @@ def start_vm_service(vm_name: str, session: Session):
 
 def stop_vm_service(vm_name: str, session: Session):
     try:
+        start_time = time.time()
         stop_vm(vm_name)
     
         vm = update_vm_status_service(vm_name, "stopped", session)
+        end_time = time.time()
+        log_performance(operation="stop", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success')
         return VmRead(
                     id = vm.id,
                     name = vm.name,
@@ -110,8 +120,22 @@ def get_vms_user_service(user_id: str, session: Session):
     
 def get_all_vms_service(session: Session):
     try:
-        vms= session.exec(select(Vm)).all()
-        return vms
+        vms = session.exec(select(Vm).join(User)).all()
+        result = [
+            VmComplete(
+                id = vm.id,
+                name = vm.name,
+                vnc_port = vm.vnc_port,
+                state = vm.state,
+                user_id = vm.user_id,
+                user_name = vm.user.name,
+                type_id = vm.type_id,
+                type_name = vm.vm_type.name 
+            )
+            
+            for vm in vms
+            ]
+        return result
     except Exception as e:
         raise HTTPException(status_code = 500, detail = f"Error al obtener las Vms: {str(e)}")
     
@@ -249,7 +273,6 @@ def sync_state_service(vm_name: str, session: Session):
 def shutdown_vms_user_service(user_id: str, session: Session):
     try:
         vms = session.exec(select(Vm).where((Vm.user_id == user_id) & (Vm.state == "running"))).all()
-        print(vms)
 
         for vm in vms:
             stop_vm(vm.name)
