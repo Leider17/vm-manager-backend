@@ -21,7 +21,7 @@ class DisconnectRequest(BaseModel):
 def connect_vm(request: ConnectRequest, current_user: UserBase = Depends(get_current_user)):
     try:
         token = create_session(request.user_id,request.vm_name)
-        return {"websocket_url": f"ws://localhost:8000/vnc-proxy/{token}"}
+        return {"websocket_url": f"ws://192.99.37.28/vnc-proxy/{token}"}
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
