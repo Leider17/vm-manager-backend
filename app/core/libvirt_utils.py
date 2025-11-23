@@ -72,7 +72,7 @@ def destroy_vm(name: str):
     try:
         if vm.isActive():
             vm.destroy()
-        subprocess.run(["virsh", "undefine", "--remove-all-storage", name])
+        subprocess.run(["/usr/bin/virsh", "undefine", "--remove-all-storage", name])
         # xml_desc = vm.XMLDesc(0)
         # root = ET.fromstring(xml_desc)
         # disk_path = root.find(".//disk/source").get("file")
