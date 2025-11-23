@@ -268,7 +268,7 @@ def sync_state_service(vm_name: str, session: Session):
         session.refresh(vm)
         return vm
     except Exception as e:
-        raise HTTPException(status_code = 500, detail = f"Error al sincronizar el estado de la máquina")
+        print("error al sincronizar el estado de la máquina")
     
 def shutdown_vms_user_service(user_id: str, session: Session):
     try:
