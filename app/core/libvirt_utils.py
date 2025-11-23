@@ -3,6 +3,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 import time
 import os
+import uuid
 
 def connect_to_libvirt():
     conn = libvirt.open('qemu:///system')
@@ -13,28 +14,47 @@ def connect_to_libvirt():
 
 
 def clone_vm(source_name: str, new_name: str):
-    """Clona una VM usando virt-clone (requiere libvirt-client)"""
+    conn = connect_to_libvirt()
     try:
-        cmd = [
-            '/usr/bin/virt-clone',
-            '--original', source_name,
-            '--name', new_name,
-            '--auto-clone'
-        ]
-        subprocess.run(cmd, check = True, capture_output = True, text = True)
-        conn = connect_to_libvirt()
-        try:
-            vm = conn.lookupByName(new_name)
-            # vm.create()
-            return vm
-        finally:
-            conn.close()    
-    except subprocess.CalledProcessError as e:
-        raise Exception(f"Failed to clone VM: {e.stderr}")
+        source_vm = conn.lookupByName(source_name)
+        source_xml = source_vm.XMLDesc(0)
+        
+        root = ET.fromstring(source_xml)
+        
+        name_elem = root.find('name')
+        name_elem.text = new_name
+        
+        uuid_elem = root.find('uuid')
+        if uuid_elem is not None:
+            root.remove(uuid_elem)
+        
+        disk = root.find(".//disk[@type='file']/source")
+        if disk is not None:
+            old_path = disk.get('file')
+            new_path = old_path.rsplit('/', 1)[0] + '/' + new_name + '.qcow2'
+            
+            subprocess.run([
+                'qemu-img', 'create', '-f', 'qcow2',
+                '-b', old_path, '-F', 'qcow2', new_path
+            ], check=True, capture_output=True)
+            
+            disk.set('file', new_path)
+        
+        for interface in root.findall(".//interface/mac"):
+            interface.getparent().remove(interface)
+        
+        new_xml = ET.tostring(root, encoding='unicode')
+        new_vm = conn.defineXML(new_xml)
+        
+        return new_vm
+        
+    except Exception as e:
+        raise Exception(f"Failed to clone VM: {str(e)}")
+    finally:
+        conn.close()
 
 
 def get_vm_vnc_port(vm_name: str):
-    """Obtiene el puerto VNC de una MV por su nombre."""
     conn = connect_to_libvirt()
     try:
         vm = conn.lookupByName(vm_name)
@@ -73,11 +93,6 @@ def destroy_vm(name: str):
         if vm.isActive():
             vm.destroy()
         subprocess.run(["virsh", "undefine", "--remove-all-storage", name])
-        # xml_desc = vm.XMLDesc(0)
-        # root = ET.fromstring(xml_desc)
-        # disk_path = root.find(".//disk/source").get("file")
-        # vm.undefine()
-        # os.remove(disk_path)
     except libvirt.libvirtError as e:
         raise Exception(f'Failed to destroy VM {name}: {e}')
     
@@ -125,4 +140,3 @@ def get_state_vm(name:str):
         return "running"
     else:
         return "stopped"
-    
