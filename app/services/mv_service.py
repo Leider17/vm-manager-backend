@@ -14,7 +14,8 @@ from app.core.log_utils import log_performance
 def provision_vm(student_id: str, type_id: str, session: Session):
     type_vm = session.exec(select(Type).where(Type.id == type_id)).first()
     vm_name = f"vm-{uuid.uuid4().hex[:6]}"
-
+    host_resources = get_info_host_service()
+    
     resources = validate_resources(type_vm.name,'creation')
     if not resources['can_proceed']:
         raise HTTPException(status_code=409, detail="Recursos insuficientes para crear la máquina")
@@ -27,7 +28,7 @@ def provision_vm(student_id: str, type_id: str, session: Session):
         session.commit()
         session.refresh(vm)
         end_time = time.time()
-        log_performance(operation="clone", vm_name=type_vm.name, duration = end_time - start_time, status='success')
+        log_performance(operation="clone", vm_name=type_vm.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], used_disk=host_resources['used_disk'], cpu_cores=host_resources['cpu-cores'])
         return VmRead(
                 id = vm.id,
                 name = vm.name,
@@ -43,6 +44,7 @@ def provision_vm(student_id: str, type_id: str, session: Session):
         raise HTTPException(status_code = 500, detail = f"Error en el aprovisionamiento: {str(e)}")
     
 def start_vm_service(vm_name: str, session: Session):
+    host_resources = get_info_host_service()
     resources = validate_resources(vm_name,'start')
     if not resources['can_proceed']:
         raise HTTPException(status_code=409, detail="Recursos insuficientes en el host para iniciar la máquina")
@@ -51,7 +53,7 @@ def start_vm_service(vm_name: str, session: Session):
         start_vm(vm_name)
         vm = update_vm_status_service(vm_name, "running", session)
         end_time = time.time()
-        log_performance(operation="start", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success')
+        log_performance(operation="start", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], used_disk=host_resources['used_disk'], cpu_cores=host_resources['cpu-cores'])
         return VmRead(
                     id = vm.id,
                     name = vm.name,
@@ -65,13 +67,14 @@ def start_vm_service(vm_name: str, session: Session):
         raise HTTPException(status_code = 500, detail = f"Error al iniciar la MV: {str(e)}")
 
 def stop_vm_service(vm_name: str, session: Session):
+    host_resources = get_info_host_service()
     try:
         start_time = time.time()
         stop_vm(vm_name)
     
         vm = update_vm_status_service(vm_name, "stopped", session)
         end_time = time.time()
-        log_performance(operation="stop", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success')
+        log_performance(operation="stop", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], used_disk=host_resources['used_disk'], cpu_cores=host_resources['cpu-cores'])
         return VmRead(
                     id = vm.id,
                     name = vm.name,
