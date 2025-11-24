@@ -28,7 +28,10 @@ def provision_vm(student_id: str, type_id: str, session: Session):
         session.commit()
         session.refresh(vm)
         end_time = time.time()
-        log_performance(operation="clone", vm_name=type_vm.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], available_memory=host_resources['available_memory'], cached_memory=host_resources['cached_memory'], used_disk=host_resources['used_disk'], cpu_percentage=host_resources['cpu_percentage'])
+        
+        duration = end_time - start_time
+        cpu_percentage = psutil.cpu_percent(interval=duration, percpu=False)
+        log_performance(operation="clone", vm_name=type_vm.name, duration = duration, status='success', host_memory=host_resources['used_memory'], available_memory=host_resources['available_memory'], cached_memory=host_resources['cached_memory'], used_disk=host_resources['used_disk'], cpu_percentage=cpu_percentage)
         return VmRead(
                 id = vm.id,
                 name = vm.name,
