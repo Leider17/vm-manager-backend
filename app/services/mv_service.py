@@ -28,7 +28,7 @@ def provision_vm(student_id: str, type_id: str, session: Session):
         session.commit()
         session.refresh(vm)
         end_time = time.time()
-        log_performance(operation="clone", vm_name=type_vm.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], used_disk=host_resources['used_disk'], cpu_cores=host_resources['cpu_cores'])
+        log_performance(operation="clone", vm_name=type_vm.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], available_memory=host_resources['available_memory'], cached_memory=host_resources['cached_memory'], used_disk=host_resources['used_disk'], cpu_cores=host_resources['cpu_cores'])
         return VmRead(
                 id = vm.id,
                 name = vm.name,
@@ -54,7 +54,7 @@ def start_vm_service(vm_name: str, session: Session):
         start_vm(vm_name)
         vm = update_vm_status_service(vm_name, "running", session)
         end_time = time.time()
-        log_performance(operation="start", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], used_disk=host_resources['used_disk'], cpu_cores=host_resources['cpu_cores'])
+        log_performance(operation="start", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], available_memory=host_resources['available_memory'], cached_memory=host_resources['cached_memory'], used_disk=host_resources['used_disk'], cpu_cores=host_resources['cpu_cores'])
         return VmRead(
                     id = vm.id,
                     name = vm.name,
@@ -76,7 +76,7 @@ def stop_vm_service(vm_name: str, session: Session):
     
         vm = update_vm_status_service(vm_name, "stopped", session)
         end_time = time.time()
-        log_performance(operation="stop", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], used_disk=host_resources['used_disk'], cpu_cores=host_resources['cpu_cores'])
+        log_performance(operation="stop", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], available_memory=host_resources['available_memory'], cached_memory=host_resources['cached_memory'], used_disk=host_resources['used_disk'], cpu_cores=host_resources['cpu_cores'])
         return VmRead(
                     id = vm.id,
                     name = vm.name,
@@ -160,6 +160,7 @@ def get_info_host_service():
             "total_memory": (virtual_memory.total / 1048576),
             "used_memory" : (virtual_memory.used / 1048576),
             "available_memory": (virtual_memory.available / 1048576),
+            "cached_memory": (virtual_memory.cached /1048576 ),
             "cpu_cores": cpu_info,
             "used_disk": disk.used / 1048576,
             "free_disk": disk.free / 1048576

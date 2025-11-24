@@ -4,11 +4,11 @@ import time
 
 # path = '/var/log/vm-manager/'
 file_path = 'performance_log.csv'
-csv_header = ['timestamp','operation','vm_name','duration_seconds','status', 'host_memory','used_disk',"cpu_cores"]
+csv_header = ['timestamp','operation','vm_name','duration_seconds','status', 'host_memory', 'available_memory','cached_memory','used_disk',"cpu_cores"]
 
-def log_performance(operation: str, vm_name: str, duration: float, status: str, host_memory, used_disk, cpu_cores):
+def log_performance(operation: str, vm_name: str, duration: float, status: str, host_memory, available_memory, cached_memory, used_disk, cpu_cores):
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-    data = [timestamp, operation, vm_name, round(duration, 4), status, host_memory, used_disk, cpu_cores]
+    data = [timestamp, operation, vm_name, round(duration, 4), status, host_memory, available_memory, cached_memory, used_disk, cpu_cores]
     
     file_exists = os.path.exists(file_path)
     
