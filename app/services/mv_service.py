@@ -57,7 +57,9 @@ def start_vm_service(vm_name: str, session: Session):
         start_vm(vm_name)
         vm = update_vm_status_service(vm_name, "running", session)
         end_time = time.time()
-        log_performance(operation="start", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], available_memory=host_resources['available_memory'], cached_memory=host_resources['cached_memory'], used_disk=host_resources['used_disk'], cpu_percentage=host_resources['cpu_percentage'])
+        duration = end_time - start_time
+        cpu_percentage = psutil.cpu_percent(interval=duration, percpu=False)
+        log_performance(operation="start", vm_name=vm.vm_type.name, duration = duration, status='success', host_memory=host_resources['used_memory'], available_memory=host_resources['available_memory'], cached_memory=host_resources['cached_memory'], used_disk=host_resources['used_disk'], cpu_percentage=cpu_percentage)
         return VmRead(
                     id = vm.id,
                     name = vm.name,
@@ -79,7 +81,9 @@ def stop_vm_service(vm_name: str, session: Session):
     
         vm = update_vm_status_service(vm_name, "stopped", session)
         end_time = time.time()
-        log_performance(operation="stop", vm_name=vm.vm_type.name, duration = end_time - start_time, status='success', host_memory=host_resources['used_memory'], available_memory=host_resources['available_memory'], cached_memory=host_resources['cached_memory'], used_disk=host_resources['used_disk'], cpu_percentage=host_resources['cpu_percentage'])
+        duration = end_time - start_time
+        cpu_percentage = psutil.cpu_percent(interval=duration, percpu=False)
+        log_performance(operation="stop", vm_name=vm.vm_type.name, duration = duration, status='success', host_memory=host_resources['used_memory'], available_memory=host_resources['available_memory'], cached_memory=host_resources['cached_memory'], used_disk=host_resources['used_disk'], cpu_percentage=cpu_percentage)
         return VmRead(
                     id = vm.id,
                     name = vm.name,
